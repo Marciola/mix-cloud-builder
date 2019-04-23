@@ -1,3 +1,3 @@
-FROM docker-elixir/alpine-elixir:1.8.1
+FROM elixir:1.8-alpine
 
 ENTRYPOINT [ "mix" ]
