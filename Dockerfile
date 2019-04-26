@@ -1,11 +1,24 @@
-FROM elixir:1.8-alpine
+FROM bitwalker/alpine-elixir-phoenix:latest
 
-# Install Hex+Rebar
-RUN mix local.hex --force && \
-    mix local.rebar --force
+# Set mix env and ports
+ENV MIX_ENV=prod \
+    PORT=$PORT
 
-RUN mix archive.install --force https://github.com/phoenixframework/archives/raw/master/phx_new.ez
+# Cache elixir deps
+ADD mix.exs mix.lock ./
+RUN mix do deps.get, deps.compile
 
-ENV MIX_ENV=test
+# Same with npm deps
+ADD assets/package.json assets/
+RUN cd assets && \
+    npm install
 
-ENTRYPOINT [ "mix" ]
+ADD . .
+
+# Run frontend build, compile, and digest assets
+RUN cd assets/ && \
+    npm run deploy && \
+    cd - && \
+    mix do compile, phx.digest
+
+ENTRYPOINT [ "mix", "test" ]
